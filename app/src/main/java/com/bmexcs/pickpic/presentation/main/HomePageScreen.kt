@@ -1,17 +1,29 @@
 package com.bmexcs.pickpic.presentation.main
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import com.bmexcs.pickpic.R
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,9 +31,16 @@ fun HomePageScreen(
     onClickHomePage: () -> Unit,
     onClickProfile: () -> Unit,
     onClickSupport: () -> Unit,
-    onClickEvent: () -> Unit,
     onClickRanking: () -> Unit,
+    onClickEvent: () -> Unit,
+    viewModel: DogViewModel = DogViewModel()
 ) {
+    val dogImages by viewModel.dogImages.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchDogImages()
+    }
+
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
@@ -38,9 +57,8 @@ fun HomePageScreen(
                     }
                 },
                 actions = {
-                    // RowScope here, so these icons will be placed horizontally
                     IconButton(onClick = { /* doSomething() */ }) {
-                        Icon(Icons.Filled.Favorite, contentDescription = "Localized description")
+                        Icon(Icons.Filled.MoreVert, contentDescription = null)
                     }
                 }
             )
@@ -72,19 +90,39 @@ fun HomePageScreen(
                 }
             }
             Spacer(modifier = Modifier.height(33.dp))
-            Column {
-                ListItem(
-                    headlineContent = { Text("Two line list item with trailing") },
-                    supportingContent = { Text("Secondary text") },
-                    trailingContent = { Text("meta") },
-                    leadingContent = {
-                        Icon(
-                            Icons.Filled.Favorite,
-                            contentDescription = "Localized description",
-                        )
-                    }
-                )
-                HorizontalDivider()
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(horizontal = 16.dp)
+            ) {
+                items(dogImages) { dogUrl ->
+                    ListItem(
+                        headlineContent = {
+                            Text("Fido and Princess' Wedding")
+                        },
+                        supportingContent = {
+                            Text("75 photos uploaded")
+                        },
+                        trailingContent = {
+                            IconButton(onClick = { /* doSomething() */ }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = null)
+
+                            }
+                        },
+                        leadingContent = {
+                            AsyncImage(
+                                model = dogUrl,
+                                contentDescription = "Dog image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(48.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            )
+                        }
+                    )
+                    Divider()
+                }
             }
         }
     }
