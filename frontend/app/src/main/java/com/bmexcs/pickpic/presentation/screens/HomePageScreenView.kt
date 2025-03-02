@@ -1,5 +1,6 @@
 package com.bmexcs.pickpic.presentation.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -25,23 +26,33 @@ import coil.compose.AsyncImage
 import com.bmexcs.pickpic.presentation.viewmodels.HomePageMockViewModel
 import androidx.navigation.NavHostController
 import com.bmexcs.pickpic.navigation.Event
+import com.bmexcs.pickpic.presentation.viewmodels.HomePageViewModel
 
 @Composable
 fun HomePageScreenView(
     navController: NavHostController,
-    viewModel: HomePageMockViewModel = hiltViewModel()
+    viewMockModel: HomePageMockViewModel = hiltViewModel(),
+    viewModel: HomePageViewModel = hiltViewModel()
 ) {
-    val dogImages by viewModel.dogImages.collectAsState()
+    val events by viewModel.events.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+//    val dogImages by viewMockModel.dogImages.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.fetchDogImages()
+//        viewMockModel.fetchDogImages()
+        viewModel.fetchEvents()
     }
+
+    Log.d("HomePageScreenView","Events: $events")
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .padding(top = 90.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -74,56 +85,56 @@ fun HomePageScreenView(
             }
             Spacer(modifier = Modifier.height(33.dp))
 
-            if (dogImages.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp)
-                ) {
-                    items(dogImages) { dogUrl ->
-                        ListItem(
-                            headlineContent = {
-                                Text("Fido and Princess' Wedding")
-                            },
-                            supportingContent = {
-                                Text("75 photos uploaded")
-                            },
-                            trailingContent = {
-                                IconButton(onClick = { /* doSomething() */ }) {
-                                    Icon(Icons.Filled.MoreVert, contentDescription = null)
-
-                                }
-                            },
-                            leadingContent = {
-                                AsyncImage(
-                                    model = dogUrl,
-                                    contentDescription = "Dog image",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(CircleShape)
-                                        .border(
-                                            2.dp,
-                                            MaterialTheme.colorScheme.primary,
-                                            CircleShape
-                                        )
-                                )
-                            }
-                        )
-                        HorizontalDivider()
-                    }
-                }
-            }
+//            if (dogImages.isEmpty()) {
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .weight(1f),
+//                    contentAlignment = Alignment.Center
+//                ) {
+//                    CircularProgressIndicator()
+//                }
+//            } else {
+//                LazyColumn(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .weight(1f),
+//                    contentPadding = PaddingValues(horizontal = 16.dp)
+//                ) {
+//                    items(dogImages) { dogUrl ->
+//                        ListItem(
+//                            headlineContent = {
+//                                Text("Fido and Princess' Wedding")
+//                            },
+//                            supportingContent = {
+//                                Text("75 photos uploaded")
+//                            },
+//                            trailingContent = {
+//                                IconButton(onClick = { /* doSomething() */ }) {
+//                                    Icon(Icons.Filled.MoreVert, contentDescription = null)
+//
+//                                }
+//                            },
+//                            leadingContent = {
+//                                AsyncImage(
+//                                    model = dogUrl,
+//                                    contentDescription = "Dog image",
+//                                    contentScale = ContentScale.Crop,
+//                                    modifier = Modifier
+//                                        .size(48.dp)
+//                                        .clip(CircleShape)
+//                                        .border(
+//                                            2.dp,
+//                                            MaterialTheme.colorScheme.primary,
+//                                            CircleShape
+//                                        )
+//                                )
+//                            }
+//                        )
+//                        HorizontalDivider()
+//                    }
+//                }
+//            }
         }
     }
 
