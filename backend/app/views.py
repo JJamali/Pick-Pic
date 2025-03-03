@@ -195,32 +195,41 @@ def event_image_count(request):
 
 @api_view(['GET'])
 def list_users_events(request, user_id):
-    user = User.objects.get(user_id=user_id)
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
 
-    owned_events = Event.objects.filter(owner_id=user)
-    invited_events = EventUser.objects.filter(user_id=user)
+    # Get all owned events
+    owned_events = Event.objects.filter(owner=user)
+    
+    # Get all event contents for owned events
+    owned_event_contents = EventContent.objects.filter(event__in=owned_events).select_related('event', 'event__owner')
 
-    owned_event_contents = EventContent.objects.filter(event__in=owned_events)
+    # Get all invited events
+    invited_events = EventUser.objects.filter(user=user).select_related('event')
 
-    invited_events = EventUser.objects.filter(user=user)
-    invited_event_contents = EventContent.objects.filter(event__in=[ie.event for ie in invited_events])
+    # Get event contents for invited events
+    invited_event_contents = EventContent.objects.filter(event__in=[ie.event for ie in invited_events]).select_related('event', 'event__owner')
 
     owned_events_data = [
         {
-            "owner_display_name": event.event.owner.display_name,
-            "owner_profile_picture": event.event.owner.profile_picture, 
-            "event_name": event.event.event_name,
+            "event_id": event_content.event.event_id,
+            "event_owner_display_name": event_content.event.owner.display_name,
+            "event_owner_profile_picture": event_content.event.owner.profile_picture, 
+            "event_name": event_content.event.event_name,
         }
-        for event in owned_event_contents
+        for event_content in owned_event_contents
     ]
 
     invited_events_data = [
         {
-            "owner_display_name": event.event.owner.display_name,
-            "owner_profile_picture": event.event.owner.profile_picture, 
-            "event_name": event.event.event_name,
+            "event_id": event_content.event.event_id,
+            "event_owner_display_name": event_content.event.owner.display_name,
+            "event_owner_profile_picture": event_content.event.owner.profile_picture, 
+            "event_name": event_content.event.event_name,
         }
-        for event in invited_event_contents
+        for event_content in invited_event_contents
     ]
 
     return Response({
