@@ -204,9 +204,6 @@ def list_users_events(request, user_id):
     # Get all owned events
     owned_events = Event.objects.filter(owner=user)
     
-    # Get all event contents for owned events
-    owned_event_contents = EventContent.objects.filter(event__in=owned_events).select_related('event', 'event__owner')
-
     # Get all invited events
     invited_events = EventUser.objects.filter(user=user).select_related('event')
 
@@ -215,12 +212,12 @@ def list_users_events(request, user_id):
 
     owned_events_data = [
         {
-            "event_id": event_content.event.event_id,
-            "event_owner_display_name": event_content.event.owner.display_name,
-            "event_owner_profile_picture": event_content.event.owner.profile_picture, 
-            "event_name": event_content.event.event_name,
+            "event_id": event.event_id,
+            "event_owner_display_name": event.owner.display_name,
+            "event_owner_profile_picture": event.owner.profile_picture, 
+            "event_name": event.event_name,
         }
-        for event_content in owned_event_contents
+        for event in owned_events
     ]
 
     invited_events_data = [
