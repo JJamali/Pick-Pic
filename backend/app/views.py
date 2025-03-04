@@ -206,8 +206,6 @@ def list_users_events(request, user_id):
     
     # Get all invited events
     invited_events = EventUser.objects.filter(user=user).select_related('event')
-
-    # Get event contents for invited events
     invited_event_contents = EventContent.objects.filter(event__in=[ie.event for ie in invited_events]).select_related('event', 'event__owner')
 
     owned_events_data = [
