@@ -135,7 +135,7 @@ fun EditableEventNameField(viewModel: CreateEventViewModel = hiltViewModel()) {
 }
 
 @Composable
-fun EditableInviteeNameField() {
+fun EditableInviteeNameField(viewModel: CreateEventViewModel = hiltViewModel()) {
     var email by remember { mutableStateOf("") }
 
     Text(
@@ -150,7 +150,8 @@ fun EditableInviteeNameField() {
     OutlinedTextField(
         value = email,
         onValueChange = { newValue ->
-            email = newValue },
+            email = newValue
+            viewModel.email.value = newValue},
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,

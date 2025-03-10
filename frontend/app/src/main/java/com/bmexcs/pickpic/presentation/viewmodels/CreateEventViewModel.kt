@@ -1,5 +1,6 @@
 package com.bmexcs.pickpic.presentation.viewmodels
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,6 +20,7 @@ class CreateEventViewModel @Inject constructor(
     val eventInfo: StateFlow<EventInfo?> = _eventInfo
 
     var eventName = mutableStateOf("")
+    var email = mutableStateOf("")
 
     fun onCreate(onSuccess: () -> Unit, onError: (String) -> Unit) {
         val name = eventName.value.trim()
