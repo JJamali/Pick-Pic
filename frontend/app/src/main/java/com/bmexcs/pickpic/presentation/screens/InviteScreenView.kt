@@ -54,7 +54,7 @@ fun EditableEmailField(
     viewModel: InviteViewModel = hiltViewModel(),
     eventId: String
 ) {
-    var email by remember { mutableStateOf("") } // Rename to 'email'
+    var email by remember { mutableStateOf("") }
     val emailList by viewModel.emailList.collectAsState()
     val showConfirmButton = emailList.isNotEmpty()
     var isError by remember { mutableStateOf(false) }

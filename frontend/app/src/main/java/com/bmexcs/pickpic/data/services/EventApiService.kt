@@ -612,6 +612,7 @@ class EventApiService @Inject constructor(){
             val url = Api.url(endpoint)
 
             Log.d(TAG, "POST: $url")
+            Log.d(TAG, "Emails: $emails")
 
             // Validate emails
             val invalidEmails = emails.filter { !isValidEmail(it) }
