@@ -96,41 +96,6 @@ def event_info(request: Request, event_id):
     event = Event.objects.get(event_id=event_id)
     return Response(data=EventSerializer(event).data, status=status.HTTP_200_OK)
 
-@api_view(['POST'])
-def authenticate(request: Request):
-    username = request.data.get('username')
-    password = request.data.get('password')
-
-    if not username or not password:
-        return Response({"error": "Username and password are required"}, status=400)
-
-    try:
-        user = User.objects.get(username=username)
-        
-        # Validate password securely
-        if check_password(password, user.password):
-            # Generate JWT token
-            payload = {
-                "id": user.id,
-                "username": user.username,
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),  # Token expires in 1 hour
-                "iat": datetime.datetime.utcnow(),
-            }
-            token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-
-            return Response({
-                "exists": True,
-                "token": token,
-                "comment": "Authentication successful"
-            })
-        else:
-            return Response({"exists": False, "comment": "Incorrect password"}, status=401)
-
-    except User.DoesNotExist:
-        return Response({"exists": False, "comment": "User does not exist"}, status=404)
-    except User.MultipleObjectsReturned:
-        return Response({"exists": False, "comment": "Multiple users with the same username exist???"}, status=500)
- 
 @api_view(['GET', 'DELETE'])
 def get_delete_image(request: Request, event_id=None, image_id=None):
     try:
@@ -152,18 +117,19 @@ def get_delete_image(request: Request, event_id=None, image_id=None):
 
             return FileResponse(file_stream, filename=filename, content_type=content_type, status=status.HTTP_200_OK)            
         elif request.method == 'DELETE':
-                event_exists = Event.objects.filter(event_id=event_id).exists()
 
-                if not event_exists:
-                    return Response(status=status.HTTP_404_NOT_FOUND, data={ "error":"event-image pair not found" })
+            event_exists = Event.objects.filter(event_id=event_id).exists()
 
-                filename = Image.objects.get(image_id=image_id).file_name
+            if not event_exists:
+                return Response(status=status.HTTP_404_NOT_FOUND, data={ "error":"event-image pair not found" })
 
-                EventContent.objects.delete(event_id=event_id, image_id=image_id)
+            filename = Image.objects.get(image_id=image_id).file_name
 
-                delete_from_gcs('pick-pic', filename)
+            EventContent.objects.get(event_id=event_id, image_id=image_id).delete()
 
-                return Response(status=status.HTTP_202_ACCEPTED, data={})
+            delete_from_gcs('pick-pic', filename)
+
+            return Response(status=status.HTTP_202_ACCEPTED, data={})
         else:
             return Response(data={ "error":"only support GET, PUT, and DELETE." }, status=status.HTTP_403_FORBIDDEN)
     except Exception as e:
