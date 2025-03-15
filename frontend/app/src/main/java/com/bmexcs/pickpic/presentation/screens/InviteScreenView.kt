@@ -18,18 +18,18 @@ import com.bmexcs.pickpic.presentation.viewmodels.InviteViewModel
 @Composable
 fun InviteScreenView(
     navController: NavHostController,
-    eventId: String, // Pass the eventId from the parent screen
+    eventId: String // Pass only the eventId
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
         // Existing email input and list UI
-        EditableEmailField()
+        EditableEmailField(eventId = eventId)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Add a button to navigate to the QR screen
         Button(
             onClick = {
-                navController.navigate("qrInviteView/$eventId") // Corrected route name
+                navController.navigate("qrInviteView/$eventId")
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -43,7 +43,10 @@ fun isValidEmail(email: String): Boolean {
 }
 
 @Composable
-fun EditableEmailField(viewModel: InviteViewModel = hiltViewModel()) {
+fun EditableEmailField(
+    viewModel: InviteViewModel = hiltViewModel(),
+    eventId: String // Pass only the eventId
+) {
     var userEmail by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     val emailList by viewModel.emailList.collectAsState()
@@ -124,7 +127,7 @@ fun EditableEmailField(viewModel: InviteViewModel = hiltViewModel()) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
-                    viewModel.confirmInvites(emailList)
+                    viewModel.confirmInvites(emailList, eventId) // No token needed
                 },
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()

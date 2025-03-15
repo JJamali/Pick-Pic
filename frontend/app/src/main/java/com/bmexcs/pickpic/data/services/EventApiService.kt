@@ -12,17 +12,19 @@ import com.bmexcs.pickpic.data.utils.Api
 import com.bmexcs.pickpic.data.utils.HttpException
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 
 private const val TAG = "EventApiService"
 
-class EventApiService {
+class EventApiService @Inject constructor(){
     private val client = OkHttpClient()
     private val gson = Gson()
 
@@ -589,6 +591,48 @@ class EventApiService {
                 val result: EventId = gson.fromJson(body, resultType)
 
                 return@withContext result.event_id
+            }
+        }
+
+    /**
+     * Invites users to the specified event by their emails.
+     *
+     * **Endpoint**: `POST /event/{event_id}/invite/user/`
+     *
+     * **Request Body**: JSON with `emails` (List<String>)
+     *
+     * **Request Content-Type**: JSON
+     *
+     * **Response**: Empty or Error
+     */
+    suspend fun inviteUserToEvent(eventId: String, emails: List<String>, token: String): Boolean =
+        withContext(Dispatchers.IO) {
+            val endpoint = "event/$eventId/invite/user/"
+            val url = Api.url(endpoint)
+
+            Log.d(TAG, "POST: $url")
+
+            // Create a JSON body with the list of emails
+            val jsonBody = JSONObject().apply {
+                put("emails", JSONArray(emails))
+            }.toString()
+
+            val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
+
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer $token")
+                .post(requestBody)
+                .build()
+
+            try {
+                client.newCall(request).execute().use { response ->
+                    Api.handleResponseStatus(response)
+                    return@withContext true
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error inviting users to event: ${e.message}")
+                return@withContext false
             }
         }
 }
