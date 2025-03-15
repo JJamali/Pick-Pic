@@ -32,13 +32,11 @@ class InviteViewModel @Inject constructor(
 
     fun confirmInvites(emailList: List<String>, eventId: String) {
         viewModelScope.launch {
-            val token = authDataSource.getIdToken() ?: throw Exception("No user token") // Get token from AuthDataSource
+            val token = authDataSource.getIdToken() ?: throw Exception("No user token")
             val success = eventApiService.inviteUserToEvent(eventId, emailList, token)
             if (success) {
-                // Handle success (e.g., show a toast or navigate to another screen)
                 Log.d(TAG, "Users invited successfully")
             } else {
-                // Handle failure (e.g., show an error message)
                 Log.e(TAG, "Failed to invite users")
             }
         }

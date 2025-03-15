@@ -10,6 +10,7 @@ import com.bmexcs.pickpic.data.models.UserEventInviteLink
 import com.bmexcs.pickpic.data.models.UserInfo
 import com.bmexcs.pickpic.data.utils.Api
 import com.bmexcs.pickpic.data.utils.HttpException
+import com.bmexcs.pickpic.presentation.screens.isValidEmail
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import jakarta.inject.Inject
@@ -612,6 +613,65 @@ class EventApiService @Inject constructor(){
 
             Log.d(TAG, "POST: $url")
 
+            // Validate emails
+            val invalidEmails = emails.filter { !isValidEmail(it) }
+            if (invalidEmails.isNotEmpty()) {
+                Log.e(TAG, "Invalid emails: $invalidEmails")
+                return@withContext false
+            }
+
+            // Fetch user IDs from emails
+            val userIds = getUserIdFromEmails(emails, token)
+            if (userIds.isEmpty()) {
+                Log.e(TAG, "No valid user IDs found for the provided emails")
+                return@withContext false
+            }
+
+            // Create a JSON body with the list of user IDs
+            val jsonBody = JSONObject().apply {
+                put("user_id", JSONArray(userIds)) // Use "user_id" as the key
+            }.toString()
+
+            Log.d(TAG, "Request Body: $jsonBody") // Log the request body
+
+            val requestBody = jsonBody.toRequestBody("application/json".toMediaType())
+
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("Authorization", "Bearer $token")
+                .post(requestBody)
+                .build()
+
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) {
+                        val errorBody = response.body?.string()
+                        Log.e(TAG, "Error Response: $errorBody") // Log the error response
+                        return@withContext false
+                    }
+                    return@withContext true
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error inviting users to event: ${e.message}")
+                return@withContext false
+            }
+        }
+    /**
+     * Converts a list of emails to user IDs.
+     *
+     * **Endpoint**: `POST /users/emails-to-ids/`
+     *
+     * **Request Body**: JSON with `emails` (List<String>)
+     *
+     * **Response**: List<String> (user IDs)
+     */
+    suspend fun getUserIdFromEmails(emails: List<String>, token: String): List<String> =
+        withContext(Dispatchers.IO) {
+            val endpoint = "users/emails-to-ids/"
+            val url = Api.url(endpoint)
+
+            Log.d(TAG, "POST: $url")
+
             // Create a JSON body with the list of emails
             val jsonBody = JSONObject().apply {
                 put("emails", JSONArray(emails))
@@ -628,11 +688,18 @@ class EventApiService @Inject constructor(){
             try {
                 client.newCall(request).execute().use { response ->
                     Api.handleResponseStatus(response)
-                    return@withContext true
+
+                    val body = response.body?.string()
+                        ?: throw HttpException(response.code, "Empty response body")
+
+                    val resultType = object : TypeToken<List<String>>() {}.type
+                    val result: List<String> = gson.fromJson(body, resultType)
+
+                    return@withContext result
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error inviting users to event: ${e.message}")
-                return@withContext false
+                Log.e(TAG, "Error fetching user IDs: ${e.message}")
+                return@withContext emptyList()
             }
         }
 }

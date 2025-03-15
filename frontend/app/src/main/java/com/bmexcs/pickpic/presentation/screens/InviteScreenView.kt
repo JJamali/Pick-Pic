@@ -14,6 +14,17 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.bmexcs.pickpic.presentation.viewmodels.InviteViewModel
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
+import java.util.regex.Pattern
 
 @Composable
 fun InviteScreenView(
@@ -38,19 +49,15 @@ fun InviteScreenView(
     }
 }
 
-fun isValidEmail(email: String): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-}
-
 @Composable
 fun EditableEmailField(
     viewModel: InviteViewModel = hiltViewModel(),
-    eventId: String // Pass only the eventId
+    eventId: String
 ) {
-    var userEmail by remember { mutableStateOf("") }
-    var isError by remember { mutableStateOf(false) }
+    var email by remember { mutableStateOf("") } // Rename to 'email'
     val emailList by viewModel.emailList.collectAsState()
     val showConfirmButton = emailList.isNotEmpty()
+    var isError by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(
@@ -64,15 +71,24 @@ fun EditableEmailField(
 
         Row(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
-                value = userEmail,
-                onValueChange = {
-                    userEmail = it
-                    isError = false // Reset error on change
+                value = email, // Use 'email'
+                onValueChange = { newText ->
+                    email = newText
+                    isError = !isValidEmail(newText)
                 },
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.weight(1f),
+                label = { Text("Email") },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Email
+                ),
+                shape = RoundedCornerShape(16.dp),
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    errorIndicatorColor = if (isError) Color.Red else Color.LightGray,
+                    errorSupportingTextColor = if (isError) Color.Red else Color.Gray,
+                ),
                 singleLine = true,
-                placeholder = { Text("Email") },
                 isError = isError,
                 supportingText = {
                     if (isError) {
@@ -83,9 +99,10 @@ fun EditableEmailField(
             Spacer(modifier = Modifier.width(8.dp))
             Button(
                 onClick = {
-                    if (userEmail.isNotBlank() && isValidEmail(userEmail)) {
-                        viewModel.addEmail(userEmail.trim()) // Use ViewModel function
-                        userEmail = "" // Clear the input field
+                    if (email.isNotBlank() && isValidEmail(email)) { // Use 'email'
+                        viewModel.addEmail(email.trim()) // Use 'email' and trim
+                        email = "" // Clear the input field
+                        isError = false //reset error
                     } else {
                         isError = true // Show error message
                     }
@@ -99,7 +116,7 @@ fun EditableEmailField(
         Spacer(modifier = Modifier.height(8.dp))
 
         Column {
-            emailList.forEach { email ->
+            emailList.forEach { emailItem ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -107,7 +124,7 @@ fun EditableEmailField(
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = email, fontSize = 16.sp, modifier = Modifier.padding(4.dp))
+                    Text(text = emailItem, fontSize = 16.sp, modifier = Modifier.padding(4.dp))
                     Text(
                         text = "X",
                         fontSize = 16.sp,
@@ -115,7 +132,7 @@ fun EditableEmailField(
                         modifier = Modifier
                             .padding(4.dp)
                             .clickable {
-                                viewModel.removeEmail(email) // Use ViewModel function
+                                viewModel.removeEmail(emailItem)
                             }
                     )
                 }
@@ -127,7 +144,7 @@ fun EditableEmailField(
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
-                    viewModel.confirmInvites(emailList, eventId) // No token needed
+                    viewModel.confirmInvites(emailList, eventId)
                 },
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -136,4 +153,10 @@ fun EditableEmailField(
             }
         }
     }
+}
+
+fun isValidEmail(email: String): Boolean {
+    val emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$"
+    val pattern = Pattern.compile(emailRegex)
+    return pattern.matcher(email).matches()
 }
