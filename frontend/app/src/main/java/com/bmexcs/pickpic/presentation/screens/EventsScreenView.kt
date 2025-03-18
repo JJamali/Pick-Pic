@@ -71,17 +71,17 @@ fun EventScreenView(
     }
 
     // Images
+    val imagesMetaData = viewModel.imagesMetadata.collectAsState().value.toList()
     val images = viewModel.images.collectAsState().value.toList()
     val isLoading by viewModel.isLoading.collectAsState()
 
     // Pagination state
     var pageSize by remember { mutableIntStateOf(8) }
+    var currentPage by remember { mutableIntStateOf(1) }
 
-    val totalPages = if (images.size % pageSize == 0) {
-        images.size / pageSize
-    } else {
-        images.size / pageSize + 1
-    }
+    val imagesToDisplay = imagesMetaData
+        .drop(currentPage * pageSize) // Skip images for previous pages
+        .take(pageSize) // Take only `pageSize` images for the current page
 
     // Infinite scroll state
     val gridState = rememberLazyGridState()
@@ -94,9 +94,10 @@ fun EventScreenView(
                     val lastVisibleItemIndex = visibleItems.last().index
                     val totalItemsCount = gridState.layoutInfo.totalItemsCount
 
-                    // Load more if we're within 5 items from the end
-                    if (lastVisibleItemIndex >= totalItemsCount - 5) {
-                        pageSize += 8
+                    // Load more if we're within 8 items from the end
+                    if (lastVisibleItemIndex >= totalItemsCount - 8) {
+                        viewModel.getImageBytes(imagesToDisplay);
+                        currentPage++;
                     }
                 }
             }

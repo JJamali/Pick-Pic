@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bmexcs.pickpic.data.models.EventInfo
+import com.bmexcs.pickpic.data.models.ImageInfo
 import com.bmexcs.pickpic.data.repositories.EventRepository
 import com.bmexcs.pickpic.data.repositories.ImageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +32,8 @@ class EventsViewModel @Inject constructor(
     private val eventRepository: EventRepository,
     private val imageRepository: ImageRepository,
 ) : ViewModel() {
+    private val _imagesMetadata = MutableStateFlow<List<ImageInfo>>(emptyList())
+    val imagesMetadata: StateFlow<List<ImageInfo>> = _imagesMetadata
 
     private val _images = MutableStateFlow<Map<String, ByteArray?>>(emptyMap())
     val images: StateFlow<Map<String, ByteArray?>> = _images
@@ -47,6 +50,12 @@ class EventsViewModel @Inject constructor(
     init {
         _eventInfo.value = eventRepository.event.value
         getImagesByEventId(event.value.event_id)
+
+        val imagesToDisplay = imagesMetadata.value
+            .drop(0) // Skip images for previous pages
+            .take(8) // Take only `pageSize` images for the current page
+
+        getImageBytes(imagesToDisplay);
         startAutoRefresh()
     }
 
@@ -127,19 +136,26 @@ class EventsViewModel @Inject constructor(
     }
 
     private fun getImagesByEventId(eventId: String) {
+        _images.value = emptyMap()
+        // Launch a coroutine on the IO dispatcher since this is a network request.
+        viewModelScope.launch(Dispatchers.IO) {
+            _imagesMetadata.value = eventRepository.getImages(eventId)
+        }
+    }
+
+    fun getImageBytes(imagesMetadata: List<ImageInfo>) {
         _isLoading.value = true
 
         // Launch a coroutine on the IO dispatcher since this is a network request.
         viewModelScope.launch(Dispatchers.IO) {
-            val images = eventRepository.getImages(eventId)
             val imageBitmapList = mutableMapOf<String, ByteArray?>()
 
-            for (image in images) {
-                val byteArray = imageRepository.getImageByImageId(eventId, image.image.image_id)
+            for (image in imagesMetadata) {
+                val byteArray = imageRepository.getImageByImageId(event.value.event_id, image.image.image_id)
                 imageBitmapList.put(image.image.image_id, byteArray)
             }
 
-            _images.value = imageBitmapList
+            _images.value += imageBitmapList;
         }.invokeOnCompletion { _isLoading.value = false }
     }
 
