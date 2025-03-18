@@ -30,7 +30,6 @@ class EventRepository @Inject constructor(
     private val imageDataSource: ImageDataSource,
 ) {
     private val _cachedEvents = MutableStateFlow<List<EventInfo>>(emptyList())
-    val cachedEvents: StateFlow<List<EventInfo>> = _cachedEvents
 
     private val _currentEventInfo = MutableStateFlow(EventInfo())
     val currentEvent = _currentEventInfo

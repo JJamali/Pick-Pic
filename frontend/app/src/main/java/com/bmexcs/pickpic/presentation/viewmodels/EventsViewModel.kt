@@ -32,6 +32,9 @@ class EventsViewModel @Inject constructor(
     private val imageRepository: ImageRepository,
 ) : ViewModel() {
 
+    private val _eventInfo = MutableStateFlow(EventInfo())
+    val event = _eventInfo
+
     private val _images = MutableStateFlow<Map<String, ByteArray?>>(emptyMap())
     val images: StateFlow<Map<String, ByteArray?>> = _images
 
@@ -40,9 +43,6 @@ class EventsViewModel @Inject constructor(
 
     private val _saved = MutableStateFlow(false)
     val saved = _saved
-
-    private val _eventInfo = MutableStateFlow(EventInfo())
-    val event = _eventInfo
 
     init {
         _eventInfo.value = eventRepository.currentEvent.value
@@ -57,17 +57,17 @@ class EventsViewModel @Inject constructor(
     fun addImage(imageByte: ByteArray) {
         viewModelScope.launch(Dispatchers.IO) {
             imageRepository.addImageBinary(event.value.event_id, imageByte)
-        }.invokeOnCompletion({
+        }.invokeOnCompletion {
             getImagesByEventId(event.value.event_id)
-        })
+        }
     }
 
     fun deleteImage(eventId: String, imageId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             imageRepository.deleteImage(eventId, imageId)
-        }.invokeOnCompletion({
+        }.invokeOnCompletion {
             getImagesByEventId(event.value.event_id)
-        })
+        }
     }
 
     fun uriToByteArray(context: Context, uri: Uri?): ByteArray? {
@@ -136,7 +136,7 @@ class EventsViewModel @Inject constructor(
 
             for (image in images) {
                 val byteArray = imageRepository.getImageByImageId(eventId, image.image.image_id)
-                imageBitmapList.put(image.image.image_id, byteArray)
+                imageBitmapList[image.image.image_id] = byteArray
             }
 
             _images.value = imageBitmapList

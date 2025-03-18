@@ -126,7 +126,8 @@ fun EditableEventNameField(viewModel: CreateEventViewModel = hiltViewModel()) {
         value = eventName,
         onValueChange = { newValue ->
             eventName = newValue
-            viewModel.eventName.value = newValue},
+            viewModel.eventName.value = newValue
+        },
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
