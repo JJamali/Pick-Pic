@@ -11,15 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+
+private const val TAG = "HomePageViewModel"
 
 @HiltViewModel
 class HomePageViewModel @Inject constructor(
     private val eventRepository: EventRepository,
     private val userRepository: UserRepository
 ) : ViewModel() {
-    // Now we use JsonElement instead of Profile.
     private val _events = MutableStateFlow<List<EventInfo>>(emptyList())
     val events: StateFlow<List<EventInfo>> = _events
 
@@ -35,6 +34,7 @@ class HomePageViewModel @Inject constructor(
 
     fun deleteEvent(eventId: String) {
         viewModelScope.launch {
+            _events.value = _events.value.filterNot { it.event_id == eventId }
             eventRepository.deleteEvent(eventId)
         }
     }
@@ -42,27 +42,19 @@ class HomePageViewModel @Inject constructor(
     fun fetchEvents() {
         viewModelScope.launch {
             _isLoading.value = true
+
             try {
-                Log.d(
-                    "HomePageViewModel",
-                    "Fetching events for user: ${userRepository.getUser().user_id}"
-                )
-                // Execute the network call on the IO dispatcher
-                val eventItems = withContext(Dispatchers.IO) {
-                    eventRepository.getEvents()
-                }
-                _events.value = eventItems
-                _errorMessage.value = null
+                Log.d(TAG, "Fetching events for user: ${userRepository.getUser().user_id}")
+                _events.value = eventRepository.getEvents()
             } catch (e: Exception) {
+                Log.e(TAG, "Error fetching events", e)
                 _errorMessage.value = e.localizedMessage ?: "An unknown error occurred"
-                Log.e("HomePageViewModel", "Error fetching events", e)
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // Method that checks if the current user is the same as the provided owner ID
     fun isCurrentUserOwner(ownerId: String): Boolean {
         return userRepository.getUser().user_id == ownerId
     }

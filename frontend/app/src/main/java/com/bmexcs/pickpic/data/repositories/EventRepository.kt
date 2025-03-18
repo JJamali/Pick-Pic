@@ -6,7 +6,6 @@ import com.bmexcs.pickpic.data.models.EventInfo
 import com.bmexcs.pickpic.data.models.EventMember
 import com.bmexcs.pickpic.data.models.ImageInfo
 import com.bmexcs.pickpic.data.models.BitmapRanked
-import com.bmexcs.pickpic.data.models.Email
 import com.bmexcs.pickpic.data.models.User
 import com.bmexcs.pickpic.data.sources.EventDataSource
 import com.bmexcs.pickpic.data.sources.ImageDataSource
@@ -16,11 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.text.SimpleDateFormat
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,8 +29,11 @@ class EventRepository @Inject constructor(
     private val eventDataSource: EventDataSource,
     private val imageDataSource: ImageDataSource,
 ) {
-    private val _eventInfo = MutableStateFlow(EventInfo())
-    val event = _eventInfo
+    private val _cachedEvents = MutableStateFlow<List<EventInfo>>(emptyList())
+    val cachedEvents: StateFlow<List<EventInfo>> = _cachedEvents
+
+    private val _currentEventInfo = MutableStateFlow(EventInfo())
+    val currentEvent = _currentEventInfo
 
     private var timestamp: Long = 0
 
@@ -47,7 +48,13 @@ class EventRepository @Inject constructor(
     }
 
     suspend fun getEvents(): List<EventInfo> {
-        return eventDataSource.getEvents()
+        if (_cachedEvents.value.isNotEmpty()) {
+            return _cachedEvents.value
+        }
+
+        val events = eventDataSource.getEvents()
+        _cachedEvents.value = events
+        return events
     }
 
     suspend fun getEventInfo(eventId: String): EventInfo {
@@ -94,7 +101,7 @@ class EventRepository @Inject constructor(
     }
 
     fun setCurrentEvent(eventInfo: EventInfo) {
-        event.value = eventInfo
+        currentEvent.value = eventInfo
         repositoryScope.launch {
             fillUnrankedQueue()
         }
@@ -105,7 +112,7 @@ class EventRepository @Inject constructor(
     }
 
     suspend fun voteOnImage(imageId: String, vote: Vote) {
-        eventDataSource.voteOnImage(event.value.event_id, imageId, vote)
+        eventDataSource.voteOnImage(currentEvent.value.event_id, imageId, vote)
     }
 
     suspend fun getUnrankedImage(): BitmapRanked {
@@ -125,11 +132,11 @@ class EventRepository @Inject constructor(
 
             Log.d(TAG, "Filling queue with $countNeeded images")
 
-            val imageInfos = eventDataSource.getUnrankedImages(event.value.event_id, countNeeded)
+            val imageInfos = eventDataSource.getUnrankedImages(currentEvent.value.event_id, countNeeded)
 
             for (imageInfo in imageInfos) {
                 val bitmapRanked =
-                    imageDataSource.getImageBinary(event.value.event_id, imageInfo.image.image_id)
+                    imageDataSource.getImageBinary(currentEvent.value.event_id, imageInfo.image.image_id)
                         ?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
                         ?.let { BitmapRanked(imageInfo, it) }
 

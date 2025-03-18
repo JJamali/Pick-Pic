@@ -32,7 +32,7 @@ class RankingViewModel @Inject constructor(
     }
 
     init {
-        _eventInfo.value = eventRepository.event.value
+        _eventInfo.value = eventRepository.currentEvent.value
         loadNextImage()
     }
 

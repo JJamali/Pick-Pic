@@ -45,7 +45,7 @@ class EventsViewModel @Inject constructor(
     val event = _eventInfo
 
     init {
-        _eventInfo.value = eventRepository.event.value
+        _eventInfo.value = eventRepository.currentEvent.value
         getImagesByEventId(event.value.event_id)
         startAutoRefresh()
     }

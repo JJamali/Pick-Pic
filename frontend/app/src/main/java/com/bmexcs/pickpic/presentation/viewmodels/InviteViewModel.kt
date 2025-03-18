@@ -3,8 +3,6 @@ package com.bmexcs.pickpic.presentation.viewmodels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bmexcs.pickpic.data.models.Email
-import com.bmexcs.pickpic.data.models.User
 import com.bmexcs.pickpic.data.repositories.EventRepository
 import com.bmexcs.pickpic.data.repositories.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,7 +46,7 @@ class InviteViewModel @Inject constructor(
                     ids
                 }
                 // Get event id from repository (assuming it has been set)
-                val eventId = eventRepository.event.value.event_id
+                val eventId = eventRepository.currentEvent.value.event_id
 
                 // Send invite request on the IO dispatcher
                 withContext(Dispatchers.IO) {
