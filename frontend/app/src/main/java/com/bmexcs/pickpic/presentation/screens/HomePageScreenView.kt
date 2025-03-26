@@ -17,8 +17,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bmexcs.pickpic.R
 import androidx.navigation.NavHostController
@@ -34,6 +40,8 @@ fun HomePageScreenView(
     val events by viewModel.events.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val randomQuote by remember { mutableStateOf(viewModel.randomQuote) }
+
 
     LaunchedEffect(Unit) {
         viewModel.fetchEvents()
@@ -45,10 +53,19 @@ fun HomePageScreenView(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(R.drawable.pickpick_logo),
-            contentDescription = "PickPic Logo",
-            modifier = Modifier.size(1000.dp, 187.5.dp)
+        Text(
+            "\"$randomQuote\"",
+            style = TextStyle(
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E88E5), // Customize color
+                letterSpacing = 1.5.sp,
+                shadow = Shadow(
+                    color = Color.Black,
+                    blurRadius = 4f
+                ),
+            ),
+            modifier = Modifier.padding(16.dp)
         )
         Spacer(modifier = Modifier.height(32.dp))
 
