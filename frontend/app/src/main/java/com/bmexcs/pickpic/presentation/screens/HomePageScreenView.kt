@@ -1,6 +1,7 @@
 package com.bmexcs.pickpic.presentation.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.dp
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bmexcs.pickpic.R
@@ -54,18 +57,28 @@ fun HomePageScreenView(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            "\"$randomQuote\"",
+            text = "\"$randomQuote\"",
             style = TextStyle(
-                fontSize = 28.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E88E5), // Customize color
-                letterSpacing = 1.5.sp,
+                color = Color(0xFF2C3E50), // Penguin suit black-blue
+                letterSpacing = 0.8.sp,
                 shadow = Shadow(
-                    color = Color.Black,
-                    blurRadius = 4f
+                    color = Color(0xFFA5D6F8), // Ice blue shadow
+                    blurRadius = 8f,
+                    offset = Offset(2f, 2f)
                 ),
+                fontFamily = FontFamily.SansSerif
             ),
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .padding(16.dp)
+                .border(
+                    width = 2.dp,
+                    color = Color(0xFFFFA726), // Penguin beak orange
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(12.dp),
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(32.dp))
 
