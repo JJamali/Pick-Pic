@@ -51,7 +51,7 @@ import com.bmexcs.pickpic.presentation.viewmodels.DownloadAmount
 import com.bmexcs.pickpic.presentation.viewmodels.FilterType
 import kotlinx.coroutines.launch
 
-private data class ButtonInfo (
+data class ButtonInfo (
     val label: String,
     val icon: Int,
     val onClick: () -> Unit

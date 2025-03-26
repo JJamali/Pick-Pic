@@ -1,6 +1,5 @@
 package com.bmexcs.pickpic.presentation.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,7 +22,6 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,101 +43,130 @@ fun HomePageScreenView(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val randomQuote by remember { mutableStateOf(viewModel.randomQuote) }
 
-
     LaunchedEffect(Unit) {
         viewModel.fetchEvents()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "\"$randomQuote\"",
-            style = TextStyle(
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF2C3E50), // Penguin suit black-blue
-                letterSpacing = 0.8.sp,
-                shadow = Shadow(
-                    color = Color(0xFFA5D6F8), // Ice blue shadow
-                    blurRadius = 8f,
-                    offset = Offset(2f, 2f)
-                ),
-                fontFamily = FontFamily.SansSerif
-            ),
-            modifier = Modifier
-                .padding(16.dp)
-                .border(
-                    width = 2.dp,
-                    color = Color(0xFFFFA726), // Penguin beak orange
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .padding(12.dp),
-            textAlign = TextAlign.Center
+    val buttons = listOf(
+        ButtonInfo(
+            "Invites",
+            R.drawable.group_add_24px,
+            onClick = { navController.navigate(Route.EventInvitation.route) }
+        ),
+        ButtonInfo(
+            "Create",
+            R.drawable.add_circle_24px,
+            onClick = { navController.navigate(Route.CreateEvent.route) }
         )
-        Spacer(modifier = Modifier.height(32.dp))
+    )
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            InvitesButton(navController)
-            CreateEventButton(navController)
-        }
-        Spacer(modifier = Modifier.height(32.dp))
-
-        when {
-            isLoading && events.isEmpty() -> {
-                CircularProgressIndicator()
-            }
-
-            events.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("No Events Found")
-                }
-            }
-
-            errorMessage != null -> {
-                Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        errorMessage ?: "An unknown error occurred",
-                        color = MaterialTheme.colorScheme.error
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                buttons.forEach { info ->
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                painter = painterResource(info.icon),
+                                contentDescription = info.label
+                            )
+                        },
+                        label = { Text(info.label, fontSize = 16.sp) },
+                        selected = false,
+                        onClick = info.onClick
                     )
                 }
             }
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "\"$randomQuote\"",
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF2C3E50),
+                    letterSpacing = 0.8.sp,
+                    shadow = Shadow(
+                        color = Color(0xFFA5D6F8),
+                        blurRadius = 8f,
+                        offset = Offset(2f, 2f)
+                    ),
+                    fontFamily = FontFamily.SansSerif
+                ),
+                modifier = Modifier
+                    .padding(16.dp)
+                    .border(
+                        width = 2.dp,
+                        color = Color(0xFFFFA726),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(12.dp),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp)
-                ) {
-                    items(events) { eventItem: EventMetadata ->
-                        EventListing(
-                            isOwner = viewModel.isCurrentUserOwner(eventItem.owner.id),
-                            eventItem = eventItem,
-                            onEnter = {
-                                viewModel.setEvent(eventItem)
-                                navController.navigate(Route.Event.route)
-                            },
-                            onDelete = {
-                                viewModel.deleteEvent(eventItem.id)
-                            },
-                            onLeave = {
-                                viewModel.leaveInvitedEvent(eventItem.id)
-                            }
+            when {
+                isLoading && events.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                events.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No Events Found")
+                    }
+                }
+
+                errorMessage != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            errorMessage ?: "An unknown error occurred",
+                            color = MaterialTheme.colorScheme.error
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(horizontal = 16.dp)
+                    ) {
+                        items(events) { eventItem ->
+                            EventListing(
+                                isOwner = viewModel.isCurrentUserOwner(eventItem.owner.id),
+                                eventItem = eventItem,
+                                onEnter = {
+                                    viewModel.setEvent(eventItem)
+                                    navController.navigate(Route.Event.route)
+                                },
+                                onDelete = {
+                                    viewModel.deleteEvent(eventItem.id)
+                                },
+                                onLeave = {
+                                    viewModel.leaveInvitedEvent(eventItem.id)
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
             }
